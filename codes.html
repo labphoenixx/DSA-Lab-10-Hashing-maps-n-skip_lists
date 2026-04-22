@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DSA Labsheet 10 Solutions</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; padding: 20px; max-width: 1000px; margin: auto; background-color: #f4f4f9; color: #333; }
+        h1 { text-align: center; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+        h2 { color: #2980b9; margin-top: 30px; }
+        .problem-container { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 30px; }
+        pre { background: #1e1e1e; color: #d4d4d4; padding: 15px; border-radius: 5px; overflow-x: auto; font-size: 14px; }
+        code { font-family: 'Courier New', Courier, monospace; }
+        .keyword { color: #569cd6; }
+        .comment { color: #6a9955; }
+        .string { color: #ce9178; }
+        .number { color: #b5cea8; }
+    </style>
+</head>
+<body>
+
+    <h1>DSA Labsheet 10 - C Solutions</h1>
+    <p><em>Excluding Q1 and Q3. All codes adhere to the "No built-in functions" rule and use appropriate DSA techniques (Hashing, Divide & Conquer).</em></p>
+
+    <div class="problem-container">
+        <h2>Question 2: VIP Warehouse Allocation (Linear Probing)</h2>
+        <pre><code><span class="comment">// Logic: Priority linear probing. If a VIP meets a Regular, swap and keep probing.</span>
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+
+int main() {
+    int m, n;
+    if (scanf("%d %d", &amp;m, &amp;n) != 2) return 0;
+
+    int *bays = (int *)malloc(m * sizeof(int));
+    for (int i = 0; i &lt; m; i++) bays[i] = -1; <span class="comment">// Initialize as empty</span>
+
+    for (int i = 0; i &lt; n; i++) {
+        int id;
+        scanf("%d", &amp;id);
+        int curr_id = id;
+        int idx = curr_id % m;
+
+        while (1) {
+            <span class="comment">// Found empty bay</span>
+            if (bays[idx] == -1) {
+                bays[idx] = curr_id;
+                break;
+            }
+            <span class="comment">// Current bay has a Regular, and inserting container is VIP</span>
+            else if (bays[idx] &lt; 1000 &amp;&amp; curr_id &gt;= 1000) {
+                int temp = bays[idx];
+                bays[idx] = curr_id;
+                curr_id = temp; <span class="comment">// Kicked out regular becomes the inserting container</span>
+            }
+            <span class="comment">// Move to next index</span>
+            idx = (idx + 1) % m;
+        }
+    }
+
+    for (int i = 0; i &lt; m; i++) printf("%d ", bays[i]);
+    printf("\n");
+
+    free(bays);
+    return 0;
+}</code></pre>
+    </div>
+
+    <div class="problem-container">
+        <h2>Question 4: Double Hashing</h2>
+        <pre><code><span class="comment">// Logic: probe = (h1(k) + i * h2(k)) % M. Increment i on collision.</span>
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+
+int main() {
+    int M, R, N;
+    if (scanf("%d %d", &amp;M, &amp;R) != 2) return 0;
+    if (scanf("%d", &amp;N) != 1) return 0;
+
+    int *hashTable = (int *)malloc(M * sizeof(int));
+    for (int i = 0; i &lt; M; i++) hashTable[i] = -1;
+
+    for (int i = 0; i &lt; N; i++) {
+        int k;
+        scanf("%d", &amp;k);
+        int h1 = k % M;
+        int h2 = R - (k % R);
+        
+        int probe_counter = 0;
+        while (probe_counter &lt; M) {
+            int idx = (h1 + probe_counter * h2) % M;
+            if (hashTable[idx] == -1) {
+                hashTable[idx] = k;
+                break;
+            }
+            probe_counter++;
+        }
+    }
+
+    for (int i = 0; i &lt; M; i++) {
+        if (i == M - 1) printf("%d", hashTable[i]);
+        else printf("%d ", hashTable[i]);
+    }
+    printf("\n");
+
+    free(hashTable);
+    return 0;
+}</code></pre>
+    </div>
+
+    <div class="problem-container">
+        <h2>Question 5: Lazy Deletion in Linear Probing</h2>
+        <pre><code><span class="comment">// Logic: Treat -2 as empty space ONLY during insertion. Probe past -2 during search/deletion.</span>
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+
+int main() {
+    int m, q;
+    if (scanf("%d %d", &amp;m, &amp;q) != 2) return 0;
+
+    int *hashTable = (int *)malloc(m * sizeof(int));
+    for (int i = 0; i &lt; m; i++) hashTable[i] = -1;
+
+    for (int i = 0; i &lt; q; i++) {
+        int type, x;
+        scanf("%d %d", &amp;type, &amp;x);
+
+        int idx = x % m;
+        int start = idx;
+
+        if (type == 1) { <span class="comment">// Insert</span>
+            while (hashTable[idx] != -1 &amp;&amp; hashTable[idx] != -2 &amp;&amp; hashTable[idx] != x) {
+                idx = (idx + 1) % m;
+                if (idx == start) break;
+            }
+            if (hashTable[idx] == -1 || hashTable[idx] == -2) {
+                hashTable[idx] = x;
+            }
+        } 
+        else if (type == 2) { <span class="comment">// Delete</span>
+            while (hashTable[idx] != -1) {
+                if (hashTable[idx] == x) {
+                    hashTable[idx] = -2;
+                    break;
+                }
+                idx = (idx + 1) % m;
+                if (idx == start) break;
+            }
+        } 
+        else if (type == 3) { <span class="comment">// Search</span>
+            int found = 0;
+            while (hashTable[idx] != -1) {
+                if (hashTable[idx] == x) {
+                    found = 1;
+                    break;
+                }
+                idx = (idx + 1) % m;
+                if (idx == start) break;
+            }
+            printf("%s\n", found ? "Found" : "Not Found");
+        }
+    }
+
+    for (int i = 0; i &lt; m; i++) {
+        printf("%d ", hashTable[i]);
+    }
+    printf("\n");
+
+    free(hashTable);
+    return 0;
+}</code></pre>
+    </div>
+
+    <div class="problem-container">
+        <h2>Question 6: Most Frequent Element using Chaining</h2>
+        <pre><code><span class="comment">// Logic: Standard chaining map. Keep track of maxFreq dynamically.</span>
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+
+typedef struct Node {
+    int key;
+    int freq;
+    struct Node* next;
+} Node;
+
+int main() {
+    int m, n;
+    if (scanf("%d %d", &amp;m, &amp;n) != 2) return 0;
+
+    Node** hashTable = (Node**)calloc(m, sizeof(Node*));
+    int maxFreq = 0;
+    int bestElement = -1;
+
+    for (int i = 0; i &lt; n; i++) {
+        int val;
+        scanf("%d", &amp;val);
+        int idx = val % m;
+
+        Node* current = hashTable[idx];
+        Node* prev = NULL;
+        int found = 0;
+
+        while (current != NULL) {
+            if (current-&gt;key == val) {
+                current-&gt;freq++;
+                found = 1;
+                <span class="comment">// Update overall best</span>
+                if (current-&gt;freq &gt; maxFreq || (current-&gt;freq == maxFreq &amp;&amp; current-&gt;key &lt; bestElement)) {
+                    maxFreq = current-&gt;freq;
+                    bestElement = current-&gt;key;
+                }
+                break;
+            }
+            prev = current;
+            current = current-&gt;next;
+        }
+
+        if (!found) {
+            Node* newNode = (Node*)malloc(sizeof(Node));
+            newNode-&gt;key = val;
+            newNode-&gt;freq = 1;
+            newNode-&gt;next = NULL;
+            
+            if (prev == NULL) hashTable[idx] = newNode;
+            else prev-&gt;next = newNode;
+
+            if (1 &gt; maxFreq || (1 == maxFreq &amp;&amp; val &lt; bestElement)) {
+                maxFreq = 1;
+                bestElement = val;
+            }
+        }
+    }
+
+    for (int i = 0; i &lt; m; i++) {
+        printf("Index %d: ", i);
+        if (hashTable[i] == NULL) {
+            printf("Empty\n");
+        } else {
+            Node* curr = hashTable[i];
+            while (curr != NULL) {
+                printf("[%d:%d]", curr-&gt;key, curr-&gt;freq);
+                if (curr-&gt;next != NULL) printf(" -&gt; ");
+                curr = curr-&gt;next;
+            }
+            printf("\n");
+        }
+    }
+    printf("%d %d\n", bestElement, maxFreq);
+
+    return 0;
+}</code></pre>
+    </div>
+
+    <div class="problem-container">
+        <h2>Question 7: Skip List Search Path Length</h2>
+        <pre><code><span class="comment">// Logic: A deterministic skip list acts like an array with leaps of 2^lvl. Steps are counted strictly by moves.</span>
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+
+int main() {
+    int n, q;
+    if (scanf("%d %d", &amp;n, &amp;q) != 2) return 0;
+
+    int *arr = (int *)malloc(n * sizeof(int));
+    for (int i = 0; i &lt; n; i++) scanf("%d", &amp;arr[i]);
+
+    <span class="comment">// Find Max Level such that 2^max_level < N</span>
+    int max_lvl = 0;
+    while ((1 &lt;&lt; (max_lvl + 1)) &lt; n) {
+        max_lvl++;
+    }
+
+    for (int i = 0; i &lt; q; i++) {
+        int target;
+        scanf("%d", &amp;target);
+
+        int curr = 0;
+        int steps = 0;
+
+        for (int lvl = max_lvl; lvl &gt;= 0; lvl--) {
+            int leap = 1 &lt;&lt; lvl;
+            
+            <span class="comment">// Move right as long as it's within bounds and <= target</span>
+            while (curr + leap &lt; n &amp;&amp; arr[curr + leap] &lt;= target) {
+                curr += leap;
+                steps++;
+            }
+            <span class="comment">// Move down if not at bottom level</span>
+            if (lvl &gt; 0) steps++;
+        }
+
+        if (arr[curr] == target) {
+            printf("%d ", steps);
+        } else {
+            printf("-1 ");
+        }
+    }
+    printf("\n");
+
+    free(arr);
+    return 0;
+}</code></pre>
+    </div>
+
+    <div class="problem-container">
+        <h2>Question 8: 2x Inversions (Divide and Conquer)</h2>
+        <pre><code><span class="comment">// Logic: Modified Merge Sort. Count elements where A[i] > 2 * A[j] before merging.</span>
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+
+long long mergeAndCount(long long arr[], int left, int mid, int right) {
+    int n1 = mid - left + 1;
+    int n2 = right - mid;
+
+    long long *L = (long long *)malloc(n1 * sizeof(long long));
+    long long *R = (long long *)malloc(n2 * sizeof(long long));
+
+    for (int i = 0; i &lt; n1; i++) L[i] = arr[left + i];
+    for (int j = 0; j &lt; n2; j++) R[j] = arr[mid + 1 + j];
+
+    long long count = 0;
+    int j = 0;
+    
+    <span class="comment">// The Divide and Conquer counting step</span>
+    for (int i = 0; i &lt; n1; i++) {
+        while (j &lt; n2 &amp;&amp; L[i] &gt; 2LL * R[j]) {
+            j++;
+        }
+        count += j;
+    }
+
+    <span class="comment">// Standard Merge</span>
+    int i = 0, k = left; j = 0;
+    while (i &lt; n1 &amp;&amp; j &lt; n2) {
+        if (L[i] &lt;= R[j]) arr[k++] = L[i++];
+        else arr[k++] = R[j++];
+    }
+    while (i &lt; n1) arr[k++] = L[i++];
+    while (j &lt; n2) arr[k++] = R[j++];
+
+    free(L); free(R);
+    return count;
+}
+
+long long mergeSortAndCount(long long arr[], int left, int right) {
+    long long count = 0;
+    if (left &lt; right) {
+        int mid = left + (right - left) / 2;
+        count += mergeSortAndCount(arr, left, mid);
+        count += mergeSortAndCount(arr, mid + 1, right);
+        count += mergeAndCount(arr, left, mid, right);
+    }
+    return count;
+}
+
+int main() {
+    int n;
+    if (scanf("%d", &amp;n) != 1) return 0;
+
+    long long *arr = (long long *)malloc(n * sizeof(long long));
+    for (int i = 0; i &lt; n; i++) scanf("%lld", &amp;arr[i]);
+
+    printf("%lld\n", mergeSortAndCount(arr, 0, n - 1));
+
+    free(arr);
+    return 0;
+}</code></pre>
+    </div>
+
+    <div class="problem-container">
+        <h2>Question 9: City Skyline (Divide and Conquer)</h2>
+        <pre><code><span class="comment">// Logic: Divide and Conquer. Base case is 1 building (outputs 2 points). Merge skylines.</span>
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+
+typedef struct { int x, y; } Point;
+typedef struct { Point* pts; int size; int cap; } Skyline;
+
+int max(int a, int b) { return a &gt; b ? a : b; }
+
+void addPoint(Skyline* sk, int x, int y) {
+    if (sk-&gt;size &gt; 0 &amp;&amp; sk-&gt;pts[sk-&gt;size - 1].x == x) {
+        sk-&gt;pts[sk-&gt;size - 1].y = max(sk-&gt;pts[sk-&gt;size - 1].y, y);
+        return;
+    }
+    if (sk-&gt;size &gt; 0 &amp;&amp; sk-&gt;pts[sk-&gt;size - 1].y == y) return; <span class="comment">// Ignore redundant heights</span>
+    
+    if (sk-&gt;size == sk-&gt;cap) {
+        sk-&gt;cap = sk-&gt;cap == 0 ? 2 : sk-&gt;cap * 2;
+        sk-&gt;pts = (Point*)realloc(sk-&gt;pts, sk-&gt;cap * sizeof(Point));
+    }
+    sk-&gt;pts[sk-&gt;size].x = x;
+    sk-&gt;pts[sk-&gt;size].y = y;
+    sk-&gt;size++;
+}
+
+Skyline merge(Skyline left, Skyline right) {
+    Skyline res = {NULL, 0, 0};
+    int h1 = 0, h2 = 0, i = 0, j = 0;
+    
+    while (i &lt; left.size &amp;&amp; j &lt; right.size) {
+        int x = 0, maxH = 0;
+        if (left.pts[i].x &lt; right.pts[j].x) {
+            x = left.pts[i].x;
+            h1 = left.pts[i].y;
+            i++;
+        } else if (left.pts[i].x &gt; right.pts[j].x) {
+            x = right.pts[j].x;
+            h2 = right.pts[j].y;
+            j++;
+        } else {
+            x = left.pts[i].x;
+            h1 = left.pts[i].y;
+            h2 = right.pts[j].y;
+            i++; j++;
+        }
+        maxH = max(h1, h2);
+        addPoint(&amp;res, x, maxH);
+    }
+    while (i &lt; left.size) { addPoint(&amp;res, left.pts[i].x, left.pts[i].y); i++; }
+    while (j &lt; right.size) { addPoint(&amp;res, right.pts[j].x, right.pts[j].y); j++; }
+    
+    free(left.pts); free(right.pts);
+    return res;
+}
+
+Skyline getSkyline(int buildings[][3], int l, int r) {
+    if (l == r) {
+        Skyline res = {NULL, 0, 0};
+        addPoint(&amp;res, buildings[l][0], buildings[l][2]);
+        addPoint(&amp;res, buildings[l][1], 0);
+        return res;
+    }
+    int mid = l + (r - l) / 2;
+    Skyline left = getSkyline(buildings, l, mid);
+    Skyline right = getSkyline(buildings, mid + 1, r);
+    return merge(left, right);
+}
+
+int main() {
+    int n;
+    if (scanf("%d", &amp;n) != 1) return 0;
+    
+    int buildings[n][3];
+    for (int i = 0; i &lt; n; i++) {
+        scanf("%d %d %d", &amp;buildings[i][0], &amp;buildings[i][1], &amp;buildings[i][2]);
+    }
+
+    Skyline finalSkyline = getSkyline(buildings, 0, n - 1);
+    
+    for (int i = 0; i &lt; finalSkyline.size; i++) {
+        printf("%d %d\n", finalSkyline.pts[i].x, finalSkyline.pts[i].y);
+    }
+    
+    free(finalSkyline.pts);
+    return 0;
+}</code></pre>
+    </div>
+
+    <div class="problem-container">
+        <h2>Question 10: Find String in String (Rolling Hash)</h2>
+        <pre><code><span class="comment">// Logic: O(N+M) Rolling Hash using strictly the formula and Base tracking method defined in the PDF.</span>
+#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+#include &lt;stdlib.h&gt;
+
+#define BASE 29
+#define MOD 1000000007
+
+int main() {
+    int n, m;
+    if (scanf("%d %d", &amp;n, &amp;m) != 2) return 0;
+
+    char *T = (char *)malloc((n + 1) * sizeof(char));
+    char *P = (char *)malloc((m + 1) * sizeof(char));
+    scanf("%s", T);
+    scanf("%s", P);
+
+    if (n &lt; m) { return 0; }
+
+    long long *power = (long long *)malloc((n + 1) * sizeof(long long));
+    power[0] = 1;
+    for (int i = 1; i &lt;= n; i++) {
+        power[i] = (power[i - 1] * BASE) % MOD;
+    }
+
+    long long Hp = 0;
+    for (int i = 0; i &lt; m; i++) {
+        long long val = P[i] - 'a' + 1;
+        Hp = (Hp + (val * power[i]) % MOD) % MOD;
+    }
+
+    long long currentHash = 0;
+    for (int i = 0; i &lt; m; i++) {
+        long long val = T[i] - 'a' + 1;
+        currentHash = (currentHash + (val * power[i]) % MOD) % MOD;
+    }
+
+    <span class="comment">// Compare first window: We must shift Hp by power[0] (which is 1)</span>
+    if (currentHash == (Hp * power[0]) % MOD) {
+        printf("0 ");
+    }
+
+    for (int i = 1; i &lt;= n - m; i++) {
+        long long old_val = T[i - 1] - 'a' + 1;
+        long long new_val = T[i + m - 1] - 'a' + 1;
+
+        <span class="comment">// Remove the old character's contribution</span>
+        currentHash = (currentHash - (old_val * power[i - 1]) % MOD + MOD) % MOD;
+        <span class="comment">// Add the new character's contribution</span>
+        currentHash = (currentHash + (new_val * power[i + m - 1]) % MOD) % MOD;
+
+        <span class="comment">// To compare cleanly without division/modular inverse, we shift the pattern's hash up by power[i]</span>
+        if (currentHash == (Hp * power[i]) % MOD) {
+            printf("%d ", i);
+        }
+    }
+    printf("\n");
+
+    free(T); free(P); free(power);
+    return 0;
+}</code></pre>
+    </div>
+
+</body>
+</html>
